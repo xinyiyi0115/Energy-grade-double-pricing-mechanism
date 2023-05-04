@@ -1,5 +1,6 @@
 hpipe_num=31
-timeh=25
+% timeh=25
+timeh=24
 dt=3600
 % for i=1:hpipe_num
 %     for t=1:timeh
@@ -51,7 +52,7 @@ model.pipemass=[100
 100
 100]
 
-hload=model.load*0.9  
+hload=model.load*1.1
 T=timeh
 C2=zeros(22,22,T)
 for t=1:timeh
@@ -144,7 +145,7 @@ mseh=sum(plhe)-sum(pshe)
 
 for i=1:22
     for t=1:timeh
-        lowerr(t,i)=ineqlin(t+(i-1)*25)
+        lowerr(t,i)=ineqlin(t+(i-1)*timeh)
     end
 end
 % for i=1:22
@@ -155,7 +156,7 @@ end
 
 for i=1:22
     for t=1:timeh
-        upperr(t,i)=ineqlin(550+t+(i-1)*25)
+        upperr(t,i)=ineqlin(528+t+(i-1)*timeh)  %550
     end
 end
 tmin=model.Tmin(1,:)
@@ -176,14 +177,24 @@ end
 
 hpp=hp'
 msh=mseh+sum(phg')
+t=1
 pr(1)=-hpp(:,1)'*C2(:,:,1)*(model.t0'-model.ta(1,t))
 for t=2:24
 pr(t)=-hpp(:,t)'*C2(:,:,t)*(tnode(t-1,:)'-model.ta(1,t))
 end
-for t=1:24
+for t=1:timeh-1
 fr(t)=hpp(:,t+1)'*C2(:,:,t+1)*(tnode(t,:)'-model.ta(1,t))
 end
+% ppre=ineqlin(2545:2566)'
+% fr(timeh)=-ppre*(tnode(timeh,:)'-model.ta(1,timeh))
+fr(timeh)=0
 tr=pr+fr
+
+ad=zeros(24,1)
+for t=1:timeh-1
+ad(t)=hpp(:,t+1)'*C2(:,:,t+1)*(model.ta(:,t+1)-model.ta(:,t))
+end
+
 
 
 

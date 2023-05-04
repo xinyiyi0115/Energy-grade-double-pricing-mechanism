@@ -8,7 +8,7 @@ gdbb=value(gdbb)
 gdaa=value(gdaa)
 %% 耦合操作成本
 %碰界情况确认
-T=25
+T=24
 for t=1:T
 %CHP1
 r11(t)=-1.91.*q_chp(t,1)+p_chp(t,1)+3.55;
@@ -27,9 +27,9 @@ r33(t)=8.667*q_chp(t,3)-p_chp(t,3)-141.3390;
 r34(t)=2*q_chp(t,3)+p_chp(t,3)-68;
 end
 %% 对应阴影价格
-for t=1:25
+for t=1:T
     for i=1:4
-        cp1(i,t)=ineqlin(3168+i+(t-1)*12) 
+        cp1(i,t)=ineqlin(3168+i+(t-1)*12)   %3168
         cp2(i,t)=ineqlin(3168+4+i+(t-1)*12)
         cp3(i,t)=ineqlin(3168+8+i+(t-1)*12)
     end
@@ -161,34 +161,34 @@ C2(65,11,t)=gdbb(64,t)
 C2(66,31,t)=gdbb(65,t)
 end
 % 热价
-ep=zeros(25,33)
-for t=1:25
+ep=zeros(T,33)
+for t=1:T
     for i=1:33
-        ep(t,i)=eqlin(1650+i+(t-1)*33)
+        ep(t,i)=eqlin(1584+i+(t-1)*33)  %1650
     end
 end
-hp=zeros(25,66)
-for t=1:25
+hp=zeros(T,66)
+for t=1:T
     for i=1:66
         hp(t,i)=eqlin(i+(t-1)*66)
     end
 end
 %% 热力市场
 %负荷热力市场能量付费
-for t=1:25
+for t=1:T
     for i=1:66
         plhe(i,t)=hload(t,i).*hp(t,i)
     end
 end
        
 %CHP热力市场能量收费
-for t=1:25
+for t=1:T
     for i=32:33
         pshe(i-30,t)=q_chp(t,i-30).*hp(t,i)
     end
 end
 
-for t=1:25
+for t=1:T
     pshe(1,t)=q_chp(t,1).*hp(t,1)
 end
 mseh=sum(plhe)-sum(pshe)
@@ -196,15 +196,15 @@ mseh=sum(plhe)-sum(pshe)
 
 %CHP热力市场能量收费
 for i=1:66
-    for t=1:25
-        lowerr(t,i)=ineqlin(t+(i-1)*25)
+    for t=1:T
+        lowerr(t,i)=ineqlin(t+(i-1)*T)
     end
 end
 tmin=[60,20,50,50,20,50,20,50,50,50,20,50,20,20,20,50,60,60,20,60,60,20,60,60,20,60,60,20,60,60,20,60,60,20,60,80,80,60,80,60,80,80,80,60,80,60,60,80,80,80,80,60,80,80,60,80,80,60,80,80,60,80,80,60,20,20]
-phg=zeros(25,66)
+phg=zeros(T,66)
 
 for i=1:66
-    for t=1:25
+    for t=1:T
         phg(t,i)=lowerr(t,i)*(tmin(i)-model.t0(1,t))
     end
 end
@@ -212,26 +212,28 @@ hpp=hp'
 msh=mseh+sum(phg')
 t=1
 pr(1)=-hpp(:,1)'*C2(:,:,1)*(tstart'-model.t0(1,t))
-for t=2:24
+for t=2:T
 pr(t)=-hpp(:,t)'*C2(:,:,t)*(tnode(t-1,:)'-model.t0(1,t))
 end
-for t=1:24
+for t=1:T-1
 fr(t)=hpp(:,t+1)'*C2(:,:,t+1)*(tnode(t,:)'-model.t0(1,t))
 end
+
+fr(T)=0
 
 tr=pr+fr
 
 
 %% 电力市场
 %负荷电力市场能量付费
-for t=1:25
+for t=1:T
     for i=1:33
         plpe(i,t)=ep(t,i).*eeload(t,i)
     end
 end
 
 %CHP 电力市场能量收费
-for t=1:25
+for t=1:T
     for i=1:3
         pspe(i,t)=p_chp(t,i).*ep(t,i)
     end
@@ -239,16 +241,20 @@ end
 msep=sum(plpe)-sum(pspe)
 
 for i=1:37
-    for t=1:25
-        lr(i,t)=ineqlin(6175+t+(i-1)*25,1)
+    for t=1:T
+        lr(i,t)=ineqlin(5928+t+(i-1)*T,1)
     end
 end
 
-for t=1:25
+for t=1:T
         cr(t)=32*sum(lr(:,t))
 end
 
+ad=zeros(T,1)
 
+for t=1:T-1
+ad(t)=hpp(:,t+1)'*C2(:,:,t+1)*(model.t02(:,t+1)-model.t02(:,t))
+end
 
 
 
